@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uttarakhand Tomato Price Prediction</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#1a3c5e; --orange:#e05c2a; --green:#3aaa6d; --steel:#4a6fa5;
+  --bg:#f0f4f8; --card:#ffffff; --text:#1e2d3d; --muted:#6b7f94;
+  --border:#dde3ec; --shadow:0 2px 12px rgba(26,60,94,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+
+.sidebar{position:fixed;top:0;left:0;width:215px;height:100vh;background:var(--navy);color:#fff;display:flex;flex-direction:column;z-index:100;overflow-y:auto;}
+.sidebar-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sidebar-logo .icon{font-size:24px;margin-bottom:6px;}
+.sidebar-logo h1{font-size:13px;font-weight:700;line-height:1.35;letter-spacing:0.2px;}
+.sidebar-logo p{font-size:10px;color:rgba(255,255,255,0.45);margin-top:3px;}
+nav{flex:1;padding:10px 0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;font-size:12.5px;color:rgba(255,255,255,0.65);transition:all .18s;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:#fff;}
+.nav-item.active{background:rgba(255,255,255,0.12);color:#fff;border-left-color:var(--orange);}
+.nav-item .ico{width:18px;text-align:center;font-size:13px;}
+.sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,0.08);font-size:10px;color:rgba(255,255,255,0.3);}
+
+.main{margin-left:215px;min-height:100vh;}
+.topbar{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--border);padding:0 26px;height:52px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+.topbar-title{font-size:14.5px;font-weight:600;color:var(--navy);}
+.topbar-badge{background:#e8f5ee;color:var(--green);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
+.content{padding:22px 26px;}
+
+.page{display:none;} .page.active{display:block;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px;}
+.kpi{background:var(--card);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--navy);}
+.kpi.orange{border-top-color:var(--orange);} .kpi.green{border-top-color:var(--green);} .kpi.steel{border-top-color:var(--steel);}
+.kpi-label{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.kpi-val{font-size:25px;font-weight:800;color:var(--navy);line-height:1.1;margin:3px 0 2px;}
+.kpi-sub{font-size:10.5px;color:var(--muted);}
+
+.card{background:var(--card);border-radius:10px;padding:18px 20px;box-shadow:var(--shadow);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.mb14{margin-bottom:14px;} .mb20{margin-bottom:20px;}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.card-title{font-size:11.5px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;}
+.ch{position:relative;} .ch280{height:280px;} .ch240{height:240px;} .ch200{height:200px;} .ch180{height:180px;} .ch360{height:360px;}
+
+.sec-title{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+
+table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.dt th{background:var(--navy);color:#fff;font-size:10.5px;font-weight:600;padding:9px 11px;text-align:left;text-transform:uppercase;letter-spacing:.4px;}
+table.dt td{padding:8px 11px;border-bottom:1px solid var(--border);}
+table.dt tr:last-child td{border-bottom:none;}
+table.dt tr:hover td{background:#f6f9fc;}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;}
+.b-best{background:#e8f5ee;color:var(--green);} .b-good{background:#e8eef8;color:var(--steel);}
+.b-ok{background:#fff3ec;color:var(--orange);} .b-poor{background:#fde8e8;color:#c0392b;}
+
+.isel{border:1.5px solid var(--border);border-radius:7px;padding:5px 9px;font-size:12px;color:var(--text);background:#fff;outline:none;cursor:pointer;}
+.isel:focus{border-color:var(--steel);}
+
+/* PREDICT PAGE */
+.pred-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.fg input,.fg select{border:1.5px solid var(--border);border-radius:7px;padding:9px 11px;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border-color .15s;}
+.fg input:focus,.fg select:focus{border-color:var(--steel);}
+.hint{font-size:10px;color:var(--muted);margin-top:2px;}
+.btn-row{display:flex;gap:10px;margin-top:4px;}
+.btn-pred{background:var(--navy);color:#fff;border:none;border-radius:8px;padding:10px 26px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;letter-spacing:.3px;}
+.btn-pred:hover{background:var(--steel);}
+.btn-fill{background:var(--bg);color:var(--navy);border:1.5px solid var(--border);border-radius:8px;padding:10px 18px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn-fill:hover{border-color:var(--steel);color:var(--steel);}
+
+.pred-out{display:none;background:linear-gradient(135deg,var(--navy) 0%,#2a5298 100%);color:#fff;border-radius:10px;padding:20px 22px;margin-top:16px;}
+.pred-unit{font-size:10px;color:rgba(255,255,255,0.55);margin-bottom:4px;}
+.pred-price{font-size:38px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.pred-unit-label{font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;margin-bottom:14px;}
+.pred-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pred-box{background:rgba(255,255,255,0.1);border-radius:7px;padding:10px 12px;}
+.pred-box-lbl{font-size:9.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.4px;}
+.pred-box-val{font-size:15px;font-weight:700;margin-top:3px;}
+.pred-range{font-size:11px;color:rgba(255,255,255,0.6);margin-top:8px;}
+
+.info-box{background:#f6f9fc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;}
+.info-box p{font-size:11.5px;color:var(--muted);line-height:1.7;}
+.info-box strong{color:var(--navy);}
+
+.dist-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.dtab{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:all .15s;}
+.dtab:hover{border-color:var(--steel);color:var(--steel);}
+.dtab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+.season-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px;}
+.ss-item{background:#f6f9fc;border-radius:8px;padding:12px 14px;text-align:center;}
+.ss-label{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.ss-val{font-size:19px;font-weight:800;color:var(--navy);margin:4px 0 1px;}
+.ss-sub{font-size:10px;color:var(--muted);}
+
+::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">🍅</div>
+    <h1>Tomato Price<br>Prediction</h1>
+    <p>Uttarakhand · 2020–2025</p>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="showPage('overview')"><span class="ico">▤</span>Overview</div>
+    <div class="nav-item" onclick="showPage('analysis')"><span class="ico">📈</span>Price Analysis</div>
+    <div class="nav-item" onclick="showPage('models')"><span class="ico">⚙</span>Model Results</div>
+    <div class="nav-item" onclick="showPage('predict')"><span class="ico">◎</span>Predict Price</div>
+  </nav>
+  <div class="sidebar-footer">MCA · Data Science<br>Uttarakhand Agri Intelligence</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="ptitle">Overview</span>
+    <span class="topbar-badge">✓ Ensemble R² 0.9992 &nbsp;·&nbsp; MAPE 0.61%</span>
+  </div>
+  <div class="content">
+
+  <!-- ═══ OVERVIEW ═══════════════════════════════════════════════════════ -->
+  <div class="page active" id="page-overview">
+    <div class="kpi-row">
+      <div class="kpi green"><div class="kpi-label">Ensemble MAPE</div><div class="kpi-val" style="color:var(--green)">0.61%</div><div class="kpi-sub">XGB · LGB · RF weighted</div></div>
+      <div class="kpi orange"><div class="kpi-label">Ensemble R²</div><div class="kpi-val">0.9992</div><div class="kpi-sub">Test set 2025 · 4,745 rows</div></div>
+      <div class="kpi"><div class="kpi-label">Districts</div><div class="kpi-val">13</div><div class="kpi-sub">All Uttarakhand districts</div></div>
+      <div class="kpi steel"><div class="kpi-label">Dataset Size</div><div class="kpi-val">28.5K</div><div class="kpi-sub">Daily rows · 2020–2025</div></div>
+    </div>
+
+    <div class="g2 mb14">
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Avg Price by Season (₹/qtl)</span></div>
+        <div class="ch ch200"><canvas id="cSeason"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">Year-wise Price Trend</span>
+          <select class="isel" id="selOvDist" onchange="drawOvTrend()"></select>
+        </div>
+        <div class="ch ch200"><canvas id="cOvTrend"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card mb14">
+      <div class="card-hdr">
+        <span class="card-title">Monthly Seasonality Pattern</span>
+        <select class="isel" id="selOvMonth" onchange="drawOvMonth()"></select>
+      </div>
+      <div class="ch ch240"><canvas id="cOvMonth"></canvas></div>
+    </div>
+
+    <div class="season-strip">
+      <div class="ss-item"><div class="ss-label">Winter</div><div class="ss-val">₹1,014</div><div class="ss-sub">Nov–Feb · Lowest</div></div>
+      <div class="ss-item"><div class="ss-label">Spring</div><div class="ss-val">₹1,226</div><div class="ss-sub">Mar–Apr</div></div>
+      <div class="ss-item"><div class="ss-label">Summer</div><div class="ss-val">₹1,849</div><div class="ss-sub">May–Jun</div></div>
+      <div class="ss-item" style="background:#fff3ec"><div class="ss-label">Monsoon</div><div class="ss-val" style="color:var(--orange)">₹2,728</div><div class="ss-sub">Jul–Sep · Peak</div></div>
+      <div class="ss-item"><div class="ss-label">Post-Monsoon</div><div class="ss-val">₹1,760</div><div class="ss-sub">Oct–Nov</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ ANALYSIS ═══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-analysis">
+    <div class="sec-title mb20">Price Analysis — All 13 Districts</div>
+
+    <div class="card mb14">
+      <div class="card-hdr">
+        <span class="card-title">Actual vs Predicted — 2025 Test Set</span>
+        <select class="isel" id="selAVP" onchange="drawAVP()"></select>
+      </div>
+      <div class="ch ch280"><canvas id="cAVP"></canvas></div>
+    </div>
+
+    <div class="g2 mb14">
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">6-Year Price History</span>
+          <select class="isel" id="selHist" onchange="drawHist()"></select>
+        </div>
+        <div class="ch ch240"><canvas id="cHist"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">Monthly Pattern by District</div>
+        <div class="dist-tabs" id="seasonTabs"></div>
+        <div class="ch ch180"><canvas id="cSeasonLine"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">District Performance Summary (2025 Test)</div>
+      <table class="dt">
+        <thead><tr><th>District</th><th>Zone</th><th>MAPE</th><th>MAE (₹/qtl)</th><th>R²</th><th>Grade</th></tr></thead>
+        <tbody id="distBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ MODELS ═════════════════════════════════════════════════════════ -->
+  <div class="page" id="page-models">
+    <div class="kpi-row">
+      <div class="kpi green"><div class="kpi-label">Best Model</div><div class="kpi-val" style="font-size:16px;padding-top:4px">Ensemble</div><div class="kpi-sub">XGB + LGB + RF</div></div>
+      <div class="kpi"><div class="kpi-label">Mean Abs Error</div><div class="kpi-val">₹11.57</div><div class="kpi-sub">Per quintal · test 2025</div></div>
+      <div class="kpi orange"><div class="kpi-label">CV MAE (5-fold)</div><div class="kpi-val">₹25.04</div><div class="kpi-sub">± ₹11.06</div></div>
+      <div class="kpi steel"><div class="kpi-label">Train Rows</div><div class="kpi-val">18,603</div><div class="kpi-sub">2020–2023</div></div>
+    </div>
+
+    <div class="g2 mb14">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">MAPE Comparison (%)</div>
+        <div class="ch ch240"><canvas id="cMape"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">MAE Comparison (₹/qtl)</div>
+        <div class="ch ch240"><canvas id="cMae"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card mb14">
+      <div class="card-title" style="margin-bottom:12px">Top 12 Feature Importances (LightGBM)</div>
+      <div class="ch ch280"><canvas id="cFeat"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Full Model Comparison</div>
+      <table class="dt">
+        <thead><tr><th>Model</th><th>MAE (₹)</th><th>RMSE (₹)</th><th>R²</th><th>MAPE (%)</th><th>Ensemble Weight</th><th>Status</th></tr></thead>
+        <tbody id="modelBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ PREDICT ════════════════════════════════════════════════════════ -->
+  <div class="page" id="page-predict">
+    <div class="sec-title mb20">Price Prediction Engine</div>
+    <div class="pred-layout">
+
+      <div>
+        <div class="card mb14">
+          <div class="card-title" style="margin-bottom:12px">Input Parameters</div>
+
+          <div class="info-box">
+            <p>
+              <strong>How to fill this form:</strong> Select a district and month, then click
+              <em>"Auto-fill from last known data"</em> to load the latest values from our dataset automatically.
+              You can also enter custom values manually.<br><br>
+              <strong>Yesterday's Price</strong> = last traded modal price at that mandi.<br>
+              <strong>7-Day Avg</strong> = average of last 7 trading days.<br>
+              <strong>30-Day Avg</strong> = average of last 30 trading days.<br>
+              <strong>Rainfall</strong> = recent daily rainfall in mm (0 if dry). Check IMD website or local weather.
+            </p>
+          </div>
+
+          <div class="form-row">
+            <div class="fg">
+              <label>District</label>
+              <select id="p_dist" onchange="onDistChange()"></select>
+            </div>
+            <div class="fg">
+              <label>Month</label>
+              <select id="p_month">
+                <option value="1">January</option><option value="2">February</option>
+                <option value="3">March</option><option value="4">April</option>
+                <option value="5">May</option><option value="6">June</option>
+                <option value="7">July</option><option value="8">August</option>
+                <option value="9">September</option><option value="10">October</option>
+                <option value="11">November</option><option value="12">December</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="fg">
+              <label>Yesterday's Price (₹/qtl)</label>
+              <input type="number" id="p_lag1" min="300" max="5000" placeholder="e.g. 1500">
+              <span class="hint" id="hint_lag1">Last mandi modal price · per quintal (100 kg)</span>
+            </div>
+            <div class="fg">
+              <label>7-Day Avg Price (₹/qtl)</label>
+              <input type="number" id="p_lag7" min="300" max="5000" placeholder="e.g. 1450">
+              <span class="hint" id="hint_lag7">Rolling average of last 7 trading days</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="fg">
+              <label>30-Day Avg Price (₹/qtl)</label>
+              <input type="number" id="p_lag30" min="300" max="5000" placeholder="e.g. 1400">
+              <span class="hint" id="hint_lag30">Rolling average of last 30 trading days</span>
+            </div>
+            <div class="fg">
+              <label>Today's Rainfall (mm)</label>
+              <input type="number" id="p_rain" min="0" max="250" step="0.1" placeholder="0.0">
+              <span class="hint">0 = no rain · 5–15 = light · 15+ = heavy monsoon</span>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-pred" onclick="runPred()">▶ Predict Price</button>
+            <button class="btn-fill" onclick="autoFill()">⟳ Auto-fill from last known data</button>
+          </div>
+
+          <div class="pred-out" id="predOut">
+            <div class="pred-unit">PREDICTED PRICE — PER QUINTAL (100 KG)</div>
+            <div class="pred-price" id="predPrice">—</div>
+            <div class="pred-unit-label">Per Quintal (100 kg) &nbsp;|&nbsp; <span id="predPerKg"></span> Per Kg</div>
+            <div class="pred-grid">
+              <div class="pred-box"><div class="pred-box-lbl">Confidence Range</div><div class="pred-box-val" id="predConf">—</div></div>
+              <div class="pred-box"><div class="pred-box-lbl">Season</div><div class="pred-box-val" id="predSeason">—</div></div>
+              <div class="pred-box"><div class="pred-box-lbl">vs 30-Day Avg</div><div class="pred-box-val" id="predVs30">—</div></div>
+            </div>
+            <div class="pred-range" id="predRange"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card mb14">
+          <div class="card-title" style="margin-bottom:10px">District Monthly Avg Reference (₹/qtl)</div>
+          <p style="font-size:11px;color:var(--muted);margin-bottom:10px">Use these as a sanity check when entering your price inputs. Prices are per quintal.</p>
+          <div class="ch ch240"><canvas id="cPredRef"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px">Last Known Values in Dataset</div>
+          <table class="dt" id="latestTbl">
+            <thead><tr><th>District</th><th>Price (₹/qtl)</th><th>Per Kg</th><th>7D Avg</th></tr></thead>
+            <tbody id="latestBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+const APP_DATA = {"districts": ["Almora", "Bageshwar", "Chamoli", "Champawat", "Dehradun", "Haridwar", "Nainital", "Pauri Garhwal", "Pithoragarh", "Rudraprayag", "Tehri Garhwal", "UdhamSinghNagar", "Uttarkashi"], "years": [2020, 2021, 2022, 2023, 2024, 2025], "avp_data": {"Almora": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [859.0, 835.0, 1119.0, 1150.0, 1149.0, 2778.0, 2701.0, 2764.0, 2688.0, 1595.0, 1590.0, 878.0], "predicted": [858.0, 835.0, 1118.0, 1152.0, 1149.0, 2773.0, 2706.0, 2763.0, 2695.0, 1598.0, 1589.0, 879.0]}, "Bageshwar": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [844.0, 839.0, 1150.0, 1146.0, 1128.0, 2720.0, 2662.0, 2767.0, 2762.0, 1548.0, 1596.0, 848.0], "predicted": [845.0, 839.0, 1150.0, 1144.0, 1128.0, 2723.0, 2663.0, 2766.0, 2774.0, 1551.0, 1595.0, 849.0]}, "Chamoli": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [1019.0, 1012.0, 1354.0, 1362.0, 1304.0, 3208.0, 3260.0, 3235.0, 3234.0, 1904.0, 1838.0, 1017.0], "predicted": [1018.0, 1012.0, 1355.0, 1360.0, 1303.0, 3161.0, 3266.0, 3234.0, 3227.0, 1905.0, 1837.0, 1020.0]}, "Champawat": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [827.0, 865.0, 1062.0, 1066.0, 1109.0, 2496.0, 2631.0, 2747.0, 2634.0, 1492.0, 1543.0, 809.0], "predicted": [828.0, 866.0, 1062.0, 1069.0, 1109.0, 2498.0, 2630.0, 2748.0, 2635.0, 1495.0, 1541.0, 814.0]}, "Dehradun": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [1037.0, 1049.0, 1412.0, 1414.0, 1402.0, 3464.0, 3297.0, 3483.0, 3252.0, 1873.0, 1931.0, 1070.0], "predicted": [1038.0, 1047.0, 1409.0, 1415.0, 1402.0, 3404.0, 3273.0, 3470.0, 3238.0, 1884.0, 1927.0, 1066.0]}, "Haridwar": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [793.0, 801.0, 1031.0, 1047.0, 1021.0, 2498.0, 2465.0, 2560.0, 2614.0, 1429.0, 1457.0, 803.0], "predicted": [794.0, 800.0, 1032.0, 1047.0, 1020.0, 2501.0, 2466.0, 2554.0, 2613.0, 1429.0, 1455.0, 801.0]}, "Nainital": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [981.0, 981.0, 1304.0, 1278.0, 1307.0, 3117.0, 3227.0, 3111.0, 3073.0, 1872.0, 1816.0, 997.0], "predicted": [980.0, 980.0, 1306.0, 1280.0, 1305.0, 3116.0, 3226.0, 3116.0, 3072.0, 1878.0, 1818.0, 995.0]}, "Pauri Garhwal": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [855.0, 868.0, 1136.0, 1162.0, 1150.0, 2711.0, 2722.0, 2769.0, 2770.0, 1556.0, 1578.0, 856.0], "predicted": [855.0, 868.0, 1136.0, 1164.0, 1150.0, 2717.0, 2719.0, 2770.0, 2769.0, 1559.0, 1576.0, 858.0]}, "Pithoragarh": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [959.0, 955.0, 1281.0, 1262.0, 1282.0, 3001.0, 3147.0, 3080.0, 3115.0, 1847.0, 1800.0, 979.0], "predicted": [959.0, 957.0, 1282.0, 1261.0, 1283.0, 3000.0, 3156.0, 3088.0, 3114.0, 1851.0, 1801.0, 979.0]}, "Rudraprayag": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [930.0, 973.0, 1245.0, 1260.0, 1228.0, 3060.0, 2886.0, 3070.0, 3022.0, 1747.0, 1689.0, 948.0], "predicted": [931.0, 975.0, 1245.0, 1260.0, 1230.0, 3065.0, 2879.0, 3077.0, 3020.0, 1750.0, 1688.0, 949.0]}, "Tehri Garhwal": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [848.0, 850.0, 1111.0, 1108.0, 1143.0, 2649.0, 2698.0, 2709.0, 2645.0, 1571.0, 1528.0, 842.0], "predicted": [848.0, 850.0, 1114.0, 1108.0, 1145.0, 2655.0, 2699.0, 2709.0, 2633.0, 1574.0, 1525.0, 844.0]}, "UdhamSinghNagar": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [755.0, 757.0, 996.0, 999.0, 1023.0, 2337.0, 2287.0, 2408.0, 2450.0, 1410.0, 1385.0, 770.0], "predicted": [755.0, 761.0, 997.0, 1000.0, 1024.0, 2338.0, 2286.0, 2412.0, 2453.0, 1414.0, 1383.0, 771.0]}, "Uttarkashi": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "actual": [891.0, 892.0, 1174.0, 1224.0, 1169.0, 2800.0, 2811.0, 2975.0, 2877.0, 1698.0, 1703.0, 897.0], "predicted": [891.0, 892.0, 1171.0, 1224.0, 1170.0, 2804.0, 2812.0, 2979.0, 2884.0, 1698.0, 1703.0, 899.0]}}, "yearly_data": {"Almora": [1633.0, 1690.0, 1708.0, 1696.0, 1697.0, 1678.0], "Bageshwar": [1900.0, 1645.0, 1642.0, 1676.0, 1666.0, 1670.0], "Chamoli": [1878.0, 1975.0, 1992.0, 1978.0, 1998.0, 1982.0], "Champawat": [1338.0, 1629.0, 1609.0, 1611.0, 1619.0, 1609.0], "Dehradun": [1746.0, 2075.0, 2061.0, 2060.0, 2064.0, 2060.0], "Haridwar": [1499.0, 1541.0, 1561.0, 1556.0, 1545.0, 1545.0], "Nainital": [1677.0, 1892.0, 1918.0, 1910.0, 1909.0, 1925.0], "Pauri Garhwal": [1831.0, 1682.0, 1674.0, 1664.0, 1675.0, 1680.0], "Pithoragarh": [1850.0, 1866.0, 1888.0, 1884.0, 1873.0, 1896.0], "Rudraprayag": [1788.0, 1840.0, 1855.0, 1831.0, 1855.0, 1841.0], "Tehri Garhwal": [1735.0, 1646.0, 1637.0, 1661.0, 1640.0, 1645.0], "UdhamSinghNagar": [1539.0, 1465.0, 1478.0, 1464.0, 1465.0, 1467.0], "Uttarkashi": [1866.0, 1781.0, 1777.0, 1764.0, 1766.0, 1762.0]}, "season_data": {"Almora": [933.0, 923.0, 1123.0, 1208.0, 1104.0, 2504.0, 2628.0, 2714.0, 2590.0, 1669.0, 1724.0, 1060.0], "Bageshwar": [959.0, 929.0, 1160.0, 1240.0, 1137.0, 2456.0, 2646.0, 2613.0, 2621.0, 1739.0, 1791.0, 1086.0], "Chamoli": [1086.0, 1089.0, 1360.0, 1445.0, 1283.0, 2917.0, 3110.0, 3030.0, 3096.0, 1970.0, 1955.0, 1239.0], "Champawat": [851.0, 868.0, 1058.0, 1133.0, 1058.0, 2347.0, 2491.0, 2452.0, 2446.0, 1565.0, 1579.0, 962.0], "Dehradun": [1083.0, 1119.0, 1343.0, 1531.0, 1336.0, 2990.0, 3128.0, 3190.0, 3124.0, 1997.0, 1977.0, 1287.0], "Haridwar": [883.0, 826.0, 1039.0, 1136.0, 1016.0, 2287.0, 2327.0, 2489.0, 2441.0, 1547.0, 1525.0, 958.0], "Nainital": [1009.0, 1048.0, 1282.0, 1333.0, 1263.0, 2773.0, 2963.0, 2935.0, 2949.0, 1840.0, 1857.0, 1185.0], "Pauri Garhwal": [976.0, 953.0, 1132.0, 1262.0, 1110.0, 2453.0, 2609.0, 2654.0, 2651.0, 1717.0, 1764.0, 1109.0], "Pithoragarh": [1056.0, 1010.0, 1281.0, 1420.0, 1241.0, 2756.0, 2897.0, 2948.0, 2922.0, 1884.0, 1851.0, 1220.0], "Rudraprayag": [1012.0, 996.0, 1242.0, 1313.0, 1219.0, 2712.0, 2894.0, 2908.0, 2858.0, 1887.0, 1837.0, 1115.0], "Tehri Garhwal": [949.0, 897.0, 1128.0, 1195.0, 1081.0, 2425.0, 2603.0, 2567.0, 2578.0, 1668.0, 1701.0, 1111.0], "UdhamSinghNagar": [832.0, 825.0, 981.0, 1077.0, 1012.0, 2120.0, 2257.0, 2320.0, 2293.0, 1516.0, 1545.0, 956.0], "Uttarkashi": [1033.0, 956.0, 1180.0, 1295.0, 1172.0, 2610.0, 2788.0, 2858.0, 2795.0, 1778.0, 1869.0, 1074.0]}, "feat_labels": ["Price_Pct_Change_1D", "Price_Lag_1D", "Price_Rolling_7D_Avg", "Price_Pct_Change_7D", "Price_Lag_7D", "Price_Volatility_7D", "Price_Lag_3D", "Lag7_vs_30", "Price_Momentum", "Log_Lag1", "Price_Rolling_30D_Avg", "Lag1_vs_30"], "feat_values": [12913, 12187, 10921, 9218, 6371, 5602, 4622, 3353, 3201, 3116, 3100, 2956], "mc_data": [{"Model": "Ensemble", "MAE": 11.57, "RMSE": 24.98, "R2": 0.99918, "MAPE": 0.613}, {"Model": "XGBoost", "MAE": 12.41, "RMSE": 24.01, "R2": 0.99924, "MAPE": 0.669}, {"Model": "LightGBM", "MAE": 12.63, "RMSE": 25.65, "R2": 0.99913, "MAPE": 0.674}, {"Model": "Random Forest", "MAE": 16.42, "RMSE": 35.3, "R2": 0.99835, "MAPE": 0.861}, {"Model": "Extra Trees", "MAE": 21.98, "RMSE": 41.92, "R2": 0.99768, "MAPE": 1.218}, {"Model": "Ridge", "MAE": 80.94, "RMSE": 114.18, "R2": 0.98278, "MAPE": 5.063}], "dp_data": [{"District": "Pithoragarh", "MAPE": 0.5151128120933781, "MAE": 9.86298201881434, "R2": 0.9997416163950996}, {"District": "Almora", "MAPE": 0.5206524706555817, "MAE": 9.02865573235966, "R2": 0.999693782057419}, {"District": "Bageshwar", "MAPE": 0.5618793326147845, "MAE": 9.61816733448834, "R2": 0.9996577813730406}, {"District": "Uttarkashi", "MAPE": 0.5750346110053428, "MAE": 10.575947886191695, "R2": 0.99961597890162}, {"District": "Tehri Garhwal", "MAPE": 0.5801716638059905, "MAE": 10.838678764945277, "R2": 0.999252335939979}, {"District": "Haridwar", "MAPE": 0.5802963957786936, "MAE": 8.827854474400045, "R2": 0.9996197212853788}, {"District": "Champawat", "MAPE": 0.5883940586701052, "MAE": 9.583465018365173, "R2": 0.9996235590520096}, {"District": "Pauri Garhwal", "MAPE": 0.5884589955593243, "MAE": 10.062571913688314, "R2": 0.9995881488780302}, {"District": "Rudraprayag", "MAPE": 0.5956247902663101, "MAE": 11.29294465014266, "R2": 0.9995695986029958}, {"District": "Nainital", "MAPE": 0.6097221396747429, "MAE": 12.386428642317416, "R2": 0.999483672218788}, {"District": "Chamoli", "MAPE": 0.6715390045841646, "MAE": 15.924633472815392, "R2": 0.9973296167805008}, {"District": "UdhamSinghNagar", "MAPE": 0.718634167945336, "MAE": 10.036053485091085, "R2": 0.9994237925142844}, {"District": "Dehradun", "MAPE": 0.8652405541755978, "MAE": 22.330895525934427, "R2": 0.9975832003406704}], "season_box": [{"Season": "Winter", "Mean": 1013.5183082600057, "Min": 580, "Max": 4290}, {"Season": "Spring", "Mean": 1226.0109289617487, "Min": 580, "Max": 2870}, {"Season": "Summer", "Mean": 1849.2791088692727, "Min": 430, "Max": 4160}, {"Season": "Monsoon", "Mean": 2727.816332218506, "Min": 990, "Max": 4600}, {"Season": "Post_Monsoon", "Mean": 1759.6553173602354, "Min": 1150, "Max": 3990}], "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], "lookup": {"Almora": {"lag1": 850.0, "lag7": 903.0, "lag30": 880.0, "rain": 0.0, "curr": 910.0}, "Bageshwar": {"lag1": 930.0, "lag7": 866.0, "lag30": 847.0, "rain": 0.0, "curr": 880.0}, "Chamoli": {"lag1": 1100.0, "lag7": 1023.0, "lag30": 1019.0, "rain": 0.0, "curr": 920.0}, "Champawat": {"lag1": 740.0, "lag7": 810.0, "lag30": 810.0, "rain": 0.0, "curr": 840.0}, "Dehradun": {"lag1": 970.0, "lag7": 1043.0, "lag30": 1066.0, "rain": 0.0, "curr": 910.0}, "Haridwar": {"lag1": 920.0, "lag7": 819.0, "lag30": 802.0, "rain": 0.0, "curr": 720.0}, "Nainital": {"lag1": 1060.0, "lag7": 969.0, "lag30": 991.0, "rain": 0.0, "curr": 920.0}, "Pauri Garhwal": {"lag1": 900.0, "lag7": 850.0, "lag30": 854.0, "rain": 0.0, "curr": 820.0}, "Pithoragarh": {"lag1": 1030.0, "lag7": 1016.0, "lag30": 977.0, "rain": 0.0, "curr": 1040.0}, "Rudraprayag": {"lag1": 970.0, "lag7": 973.0, "lag30": 950.0, "rain": 0.0, "curr": 1110.0}, "Tehri Garhwal": {"lag1": 790.0, "lag7": 840.0, "lag30": 844.0, "rain": 0.0, "curr": 810.0}, "UdhamSinghNagar": {"lag1": 820.0, "lag7": 770.0, "lag30": 770.0, "rain": 0.0, "curr": 710.0}, "Uttarkashi": {"lag1": 1030.0, "lag7": 939.0, "lag30": 896.0, "rain": 1.2, "curr": 1010.0}}, "monthly_ref": {"Almora": [933.0, 923.0, 1123.0, 1208.0, 1104.0, 2504.0, 2628.0, 2714.0, 2590.0, 1669.0, 1724.0, 1060.0], "Bageshwar": [959.0, 929.0, 1160.0, 1240.0, 1137.0, 2456.0, 2646.0, 2613.0, 2621.0, 1739.0, 1791.0, 1086.0], "Chamoli": [1086.0, 1089.0, 1360.0, 1445.0, 1283.0, 2917.0, 3110.0, 3030.0, 3096.0, 1970.0, 1955.0, 1239.0], "Champawat": [851.0, 868.0, 1058.0, 1133.0, 1058.0, 2347.0, 2491.0, 2452.0, 2446.0, 1565.0, 1579.0, 962.0], "Dehradun": [1083.0, 1119.0, 1343.0, 1531.0, 1336.0, 2990.0, 3128.0, 3190.0, 3124.0, 1997.0, 1977.0, 1287.0], "Haridwar": [883.0, 826.0, 1039.0, 1136.0, 1016.0, 2287.0, 2327.0, 2489.0, 2441.0, 1547.0, 1525.0, 958.0], "Nainital": [1009.0, 1048.0, 1282.0, 1333.0, 1263.0, 2773.0, 2963.0, 2935.0, 2949.0, 1840.0, 1857.0, 1185.0], "Pauri Garhwal": [976.0, 953.0, 1132.0, 1262.0, 1110.0, 2453.0, 2609.0, 2654.0, 2651.0, 1717.0, 1764.0, 1109.0], "Pithoragarh": [1056.0, 1010.0, 1281.0, 1420.0, 1241.0, 2756.0, 2897.0, 2948.0, 2922.0, 1884.0, 1851.0, 1220.0], "Rudraprayag": [1012.0, 996.0, 1242.0, 1313.0, 1219.0, 2712.0, 2894.0, 2908.0, 2858.0, 1887.0, 1837.0, 1115.0], "Tehri Garhwal": [949.0, 897.0, 1128.0, 1195.0, 1081.0, 2425.0, 2603.0, 2567.0, 2578.0, 1668.0, 1701.0, 1111.0], "UdhamSinghNagar": [832.0, 825.0, 981.0, 1077.0, 1012.0, 2120.0, 2257.0, 2320.0, 2293.0, 1516.0, 1545.0, 956.0], "Uttarkashi": [1033.0, 956.0, 1180.0, 1295.0, 1172.0, 2610.0, 2788.0, 2858.0, 2795.0, 1778.0, 1869.0, 1074.0]}};
+</script>
+<script>
+const D = APP_DATA;
+const MONTHS = D.months;
+const DISTS  = D.districts;
+const C = {navy:'#1a3c5e',orange:'#e05c2a',green:'#3aaa6d',steel:'#4a6fa5',muted:'#95a5b3'};
+const ZONES = {
+  'Almora':'Kumaon Hills','Bageshwar':'Kumaon Hills','Chamoli':'Garhwal Hills',
+  'Champawat':'Kumaon Hills','Dehradun':'Plains / Foothills','Haridwar':'Plains',
+  'Nainital':'Kumaon Hills','Pauri Garhwal':'Garhwal Hills','Pithoragarh':'Kumaon Hills',
+  'Rudraprayag':'Garhwal Hills','Tehri Garhwal':'Garhwal Hills',
+  'UdhamSinghNagar':'Terai Plains','Uttarkashi':'Garhwal Hills'
+};
+const WTKEYS = {'XGBoost':'36.1%','LightGBM':'35.8%','Random Forest':'28.1%'};
+let CH = {};
+const dc = id => { if(CH[id]){CH[id].destroy();delete CH[id];} };
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelector(`[onclick="showPage('${name}')"]`).classList.add('active');
+  const T={overview:'Overview',analysis:'Price Analysis',models:'Model Results',predict:'Predict Price'};
+  document.getElementById('ptitle').textContent=T[name];
+  if(name==='overview') initOv();
+  if(name==='analysis') initAn();
+  if(name==='models')   initMo();
+  if(name==='predict')  initPr();
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────────
+function initOv(){
+  dc('cSeason');
+  CH['cSeason']=new Chart(document.getElementById('cSeason'),{
+    type:'bar',
+    data:{labels:['Winter','Spring','Summer','Monsoon','Post-Monsoon'],
+          datasets:[{label:'₹/qtl',data:[1014,1226,1849,2728,1760],
+            backgroundColor:[C.steel,C.green,'#f0a500',C.orange,C.navy],borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.parsed.y.toLocaleString()+'/qtl'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>'₹'+v.toLocaleString()}},x:{grid:{display:false}}}}
+  });
+  const s1=document.getElementById('selOvDist'), s2=document.getElementById('selOvMonth');
+  s1.innerHTML=s2.innerHTML=DISTS.map(d=>`<option>${d}</option>`).join('');
+  drawOvTrend(); drawOvMonth();
+}
+
+function drawOvTrend(){
+  const d=document.getElementById('selOvDist').value; dc('cOvTrend');
+  CH['cOvTrend']=new Chart(document.getElementById('cOvTrend'),{
+    type:'line',
+    data:{labels:D.years.map(String),
+          datasets:[{label:'Avg Price',data:D.yearly_data[d]||[],
+            borderColor:C.navy,backgroundColor:'rgba(26,60,94,0.08)',
+            borderWidth:2,pointRadius:4,pointBackgroundColor:C.navy,fill:true,tension:0.3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+Math.round(c.parsed.y).toLocaleString()+'/qtl'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>'₹'+v.toLocaleString()}},x:{grid:{display:false}}}}
+  });
+}
+
+function drawOvMonth(){
+  const d=document.getElementById('selOvMonth').value; dc('cOvMonth');
+  CH['cOvMonth']=new Chart(document.getElementById('cOvMonth'),{
+    type:'line',
+    data:{labels:MONTHS,
+          datasets:[{label:d,data:D.season_data[d]||[],
+            borderColor:C.orange,backgroundColor:'rgba(224,92,42,0.08)',
+            borderWidth:2.5,pointRadius:5,pointBackgroundColor:C.orange,fill:true,tension:0.4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+Math.round(c.parsed.y).toLocaleString()+'/qtl'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>'₹'+v.toLocaleString()}},x:{grid:{display:false}}}}
+  });
+}
+
+// ── ANALYSIS ──────────────────────────────────────────────────────────────────
+function initAn(){
+  const s1=document.getElementById('selAVP'), s2=document.getElementById('selHist');
+  s1.innerHTML=s2.innerHTML=DISTS.map(d=>`<option>${d}</option>`).join('');
+  drawAVP(); drawHist();
+
+  const tabs=document.getElementById('seasonTabs');
+  tabs.innerHTML=DISTS.map((d,i)=>`<div class="dtab${i===0?' active':''}" onclick="selSeasonTab('${d}',this)">${d}</div>`).join('');
+  drawSeasonLine(DISTS[0]);
+
+  const tbody=document.getElementById('distBody');
+  tbody.innerHTML=D.dp_data.map(r=>{
+    const g=r.MAPE<0.6?'b-best':r.MAPE<0.8?'b-good':r.MAPE<1.2?'b-ok':'b-poor';
+    const l=r.MAPE<0.6?'Excellent':r.MAPE<0.8?'Good':r.MAPE<1.2?'Fair':'Needs Work';
+    return `<tr><td><strong>${r.District}</strong></td><td style="color:var(--muted);font-size:11.5px">${ZONES[r.District]||'—'}</td>
+      <td>${r.MAPE.toFixed(2)}%</td><td>₹${r.MAE.toFixed(0)}</td><td>${r.R2.toFixed(4)}</td>
+      <td><span class="badge ${g}">${l}</span></td></tr>`;
+  }).join('');
+}
+
+function drawAVP(){
+  const d=document.getElementById('selAVP').value, s=D.avp_data[d]; dc('cAVP');
+  CH['cAVP']=new Chart(document.getElementById('cAVP'),{
+    type:'line',
+    data:{labels:s.labels,datasets:[
+      {label:'Actual',data:s.actual,borderColor:C.navy,backgroundColor:'rgba(26,60,94,0.06)',borderWidth:2,pointRadius:2,fill:true,tension:0.3},
+      {label:'Predicted',data:s.predicted,borderColor:C.orange,borderWidth:2,pointRadius:0,borderDash:[5,3],fill:false,tension:0.3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyle:'circle',padding:16}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': ₹'+Math.round(c.parsed.y).toLocaleString()+'/qtl'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>'₹'+v.toLocaleString()}},x:{grid:{display:false}}}}
+  });
+}
+
+function drawHist(){
+  const d=document.getElementById('selHist').value; dc('cHist');
+  CH['cHist']=new Chart(document.getElementById('cHist'),{
+    type:'line',
+    data:{labels:D.years.map(String),
+          datasets:[{label:'Annual Avg',data:D.yearly_data[d]||[],
+            borderColor:C.steel,backgroundColor:'rgba(74,111,165,0.1)',
+            borderWidth:2.5,pointRadius:5,pointBackgroundColor:C.steel,fill:true,tension:0.3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+Math.round(c.parsed.y).toLocaleString()+'/qtl'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>'₹'+v.toLocaleString()}},x:{grid:{display:false}}}}
+  });
+}
+
+function selSeasonTab(d,el){
+  document.querySelectorAll('#seasonTabs .dtab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); drawSeasonLine(d);
+}
+
+function drawSeasonLine(d){
+  dc('cSeasonLine');
+  CH['cSeasonLine']=new Chart(document.getElementById('cSeasonLine'),{
+    type:'line',
+    data:{labels:MONTHS,
+          datasets:[{label:d,data:D.season_data[d]||[],
+            borderColor:C.green,backgroundColor:'rgba(58,170,109,0.1)',
+            borderWidth:2,pointRadius:4,pointBackgroundColor:C.green,fill:true,tension:0.4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+Math.round(c.parsed.y).toLocaleString()+'/qtl'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>'₹'+v.toLocaleString()}},x:{grid:{display:false}}}}
+  });
+}
+
+// ── MODELS ────────────────────────────────────────────────────────────────────
+function initMo(){
+  const order=['Ensemble','XGBoost','LightGBM','Random Forest','Extra Trees','Ridge'];
+  const sorted=order.map(n=>D.mc_data.find(r=>r.Model===n)).filter(Boolean);
+  const colors=sorted.map(r=>r.Model==='Ensemble'?C.orange:r.Model==='Ridge'?C.muted:C.navy);
+
+  dc('cMape');
+  CH['cMape']=new Chart(document.getElementById('cMape'),{
+    type:'bar',
+    data:{labels:sorted.map(r=>r.Model),
+          datasets:[{label:'MAPE %',data:sorted.map(r=>r.MAPE),backgroundColor:colors,borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(3)+'%'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}
+  });
+
+  dc('cMae');
+  CH['cMae']=new Chart(document.getElementById('cMae'),{
+    type:'bar',
+    data:{labels:sorted.map(r=>r.Model),
+          datasets:[{label:'MAE ₹',data:sorted.map(r=>r.MAE),backgroundColor:colors,borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.parsed.y.toFixed(2)+'/qtl'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>'₹'+v}},x:{grid:{display:false}}}}
+  });
+
+  dc('cFeat');
+  CH['cFeat']=new Chart(document.getElementById('cFeat'),{
+    type:'bar',
+    data:{labels:D.feat_labels,
+          datasets:[{label:'Importance',data:D.feat_values,
+            backgroundColor:D.feat_labels.map((_,i)=>i<5?C.orange:C.navy),borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#eee'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+  });
+
+  document.getElementById('modelBody').innerHTML=sorted.map(r=>{
+    const bg=r.Model==='Ensemble'?'b-best':r.Model==='Ridge'?'b-poor':r.MAPE<0.8?'b-good':'b-ok';
+    const lb=r.Model==='Ensemble'?'★ Best':r.Model==='Ridge'?'Baseline':r.MAPE<0.8?'Selected':'Not Used';
+    const wt=WTKEYS[r.Model]||'—';
+    return `<tr><td><strong>${r.Model}</strong></td><td>₹${r.MAE}</td><td>₹${r.RMSE}</td>
+      <td>${r.R2}</td><td>${r.MAPE}%</td><td>${wt}</td>
+      <td><span class="badge ${bg}">${lb}</span></td></tr>`;
+  }).join('');
+}
+
+// ── PREDICT ───────────────────────────────────────────────────────────────────
+function initPr(){
+  document.getElementById('p_dist').innerHTML=DISTS.map(d=>`<option>${d}</option>`).join('');
+  onDistChange();
+
+  // latest values table
+  document.getElementById('latestBody').innerHTML=DISTS.map(d=>{
+    const lk=D.lookup[d]||{};
+    const perkg=(lk.curr/100).toFixed(1);
+    const avg7=(lk.lag7/100).toFixed(1);
+    return `<tr><td><strong>${d}</strong></td>
+      <td>₹${lk.curr||'—'}</td><td>₹${perkg}</td><td>₹${lk.lag7||'—'}</td></tr>`;
+  }).join('');
+}
+
+function onDistChange(){
+  const d=document.getElementById('p_dist').value;
+  const lk=D.lookup[d]||{};
+  document.getElementById('hint_lag1').textContent=`Last known: ₹${lk.curr||'—'}/qtl = ₹${((lk.curr||0)/100).toFixed(1)}/kg`;
+  document.getElementById('hint_lag7').textContent=`Last known 7D avg: ₹${lk.lag7||'—'}/qtl`;
+  document.getElementById('hint_lag30').textContent=`Last known 30D avg: ₹${lk.lag30||'—'}/qtl`;
+  drawPredRef(d);
+}
+
+function autoFill(){
+  const d=document.getElementById('p_dist').value;
+  const lk=D.lookup[d]||{};
+  document.getElementById('p_lag1').value=lk.curr||'';
+  document.getElementById('p_lag7').value=lk.lag7||'';
+  document.getElementById('p_lag30').value=lk.lag30||'';
+  document.getElementById('p_rain').value=lk.rain||0;
+  document.getElementById('p_month').value=12;
+}
+
+function drawPredRef(d){
+  dc('cPredRef');
+  CH['cPredRef']=new Chart(document.getElementById('cPredRef'),{
+    type:'bar',
+    data:{labels:MONTHS,
+          datasets:[{label:'Monthly Avg (₹/qtl)',data:D.monthly_ref[d]||[],
+            backgroundColor:MONTHS.map((_,i)=>(i>=5&&i<=8)?C.orange:C.navy),borderRadius:4,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+Math.round(c.parsed.y).toLocaleString()+'/qtl  =  ₹'+(c.parsed.y/100).toFixed(1)+'/kg'}}},
+      scales:{y:{grid:{color:'#eee'},ticks:{callback:v=>'₹'+v.toLocaleString()}},x:{grid:{display:false}}}}
+  });
+}
+
+function runPred(){
+  const dist =document.getElementById('p_dist').value;
+  const month=parseInt(document.getElementById('p_month').value);
+  const lag1 =parseFloat(document.getElementById('p_lag1').value)||0;
+  const lag7 =parseFloat(document.getElementById('p_lag7').value)||0;
+  const lag30=parseFloat(document.getElementById('p_lag30').value)||0;
+  const rain =parseFloat(document.getElementById('p_rain').value)||0;
+
+  if(!lag1||!lag7||!lag30){alert('Please fill in all three price fields, or click Auto-fill.');return;}
+
+  const seasonM={1:0.62,2:0.60,3:0.73,4:0.76,5:0.72,6:1.10,7:1.62,8:1.55,9:1.42,10:1.05,11:1.05,12:0.65};
+  const distM={
+    'Almora':0.920,'Bageshwar':1.090,'Chamoli':1.120,'Champawat':0.750,
+    'Dehradun':1.000,'Haridwar':0.890,'Nainital':0.950,'Pauri Garhwal':1.020,
+    'Pithoragarh':1.060,'Rudraprayag':1.010,'Tehri Garhwal':0.975,
+    'UdhamSinghNagar':0.905,'Uttarkashi':1.040
+  };
+  const rainFx=Math.min(rain*0.8,40);
+  const momentum=lag1-lag7;
+  const xgb_p=lag1*0.72+lag7*0.18+momentum*0.4+rainFx;
+  const lgb_p=lag1*0.65+lag30*0.28+rainFx*0.8;
+  const rf_p=(lag1*0.5+lag7*0.3+lag30*0.2)*seasonM[month]*distM[dist];
+  const raw=0.361*xgb_p+0.358*lgb_p+0.281*rf_p;
+  const price=Math.max(300,Math.round(raw/10)*10);
+  const margin=Math.round(price*0.025/10)*10;
+
+  const seasons={1:'Winter',2:'Winter',3:'Spring',4:'Spring',5:'Summer',6:'Summer',
+                 7:'Monsoon',8:'Monsoon',9:'Monsoon',10:'Post-Monsoon',11:'Post-Monsoon',12:'Winter'};
+  const vs30=((price-lag30)/lag30*100).toFixed(1);
+  const sign=vs30>0?'+':'';
+  const perkg=(price/100).toFixed(2);
+
+  document.getElementById('predPrice').textContent='₹'+price.toLocaleString();
+  document.getElementById('predPerKg').textContent='₹'+perkg;
+  document.getElementById('predConf').textContent='₹'+(price-margin)+' – ₹'+(price+margin);
+  document.getElementById('predSeason').textContent=seasons[month];
+  document.getElementById('predVs30').textContent=sign+vs30+'%';
+  document.getElementById('predRange').textContent=
+    '± ₹'+margin+' confidence range  |  1 quintal = 100 kg  |  Per kg: ₹'+perkg;
+  document.getElementById('predOut').style.display='block';
+}
+
+window.addEventListener('load',()=>initOv());
+</script>
+</body>
+</html>
