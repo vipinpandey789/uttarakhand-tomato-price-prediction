@@ -1,0 +1,16 @@
+,importance
+price_lag_1d,1310
+price_rollavg_7d,923
+lag1_over_roll30,590
+price_rollstd_7d,539
+price_lag_14d,505
+price_rollavg_30d,504
+price_rollavg_14d,495
+price_rollstd_30d,486
+price_lag_7d,473
+price_lag_3d,460
+price_momentum_7d,456
+rainfall_lag_7d,429
+Elevation_m,415
+Week_of_Year,403
+Year,402
